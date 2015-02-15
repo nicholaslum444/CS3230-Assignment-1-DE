@@ -45,7 +45,7 @@ class Template {
 			int[] vArr = toIntArray(v, Math.max(v.length(), m.length()));
 			int[] mArr = toIntArray(m, Math.max(v.length(), m.length()));
 			
-			int[] pArr = multiply(vArr, mArr, b);
+			int[] pArr = carrotSoba(vArr, mArr);
 			
 			// make back into string
 			p = makeString(pArr);
@@ -62,56 +62,14 @@ class Template {
         sc.close();
     }
     
-    private static String installDot(String s, int pos) {
-    	String ans = "";
-    	
-    	if (pos == 0) {
-    		StringBuilder sb = new StringBuilder(".");
-    		sb.append(s);
-    		ans = sb.toString();
-    	} else {
-    		StringBuilder sb = new StringBuilder(s.substring(0, pos));
-    		sb.append(".");
-    		sb.append(s.substring(pos, s.length()));
-    		ans = sb.toString();
-    	}
-    	
-    	ans = new StringBuilder(ans).reverse().toString();
-    	
-		return ans;
-	}
-    
-    private static String makeString(int[] a) {
-    	StringBuilder s = new StringBuilder();
-    	
-    	for (int i = 0; i < a.length; i++) {
-    		s.append(toDigit(a[i]));
-    	}
-    	
-    	return s.toString();
-    }
-    
-    public static int[] add(int[] x, int[] y) {
-    	
-    	return null;
-    }
-    
-    public static int[] minus(int[] x, int[] y) {
-    	
-    	return null;
-    }
-    
-    public static int[] multiplyTens(int[] x, int p) {
-    	
-    	return null;
-    }
-    
     public static int[] splitHigh(int[] x, int r) {
+    	// [0, 1, 2, 3, 4] splitHigh 2 = [2, 3, 4]
     	
     	return null;
     }
     
     public static int[] splitLow(int[] x, int r) {
+    	// [0, 1, 2, 3, 4] splitlow 1 = [0, 1]
     	
     	return null;
     }
@@ -124,10 +82,10 @@ class Template {
     	
     	// split the two arrays at maxlen/2
     	int r = maxLen / 2;
-    	int[] xHigh = {};
-    	int[] xLow = {};
-    	int[] yHigh = {};
-    	int[] yLow = {};
+    	int[] xHigh = splitHigh(x, r);
+    	int[] xLow = splitLow(x, r-1);
+    	int[] yHigh = splitHigh(y, r);
+    	int[] yLow = splitLow(y, r-1);
     	
     	// 3 recursives
     	int[] z0 = carrotSoba(xLow, yLow);
@@ -135,18 +93,32 @@ class Template {
     	int[] z2 = carrotSoba(xHigh, yHigh);
     	
     	// Res = Z2 * B^(2*R) + (Z1-Z2-Z0)*B^R + Z0
+    	
+    	// (Z1-Z2-Z0)
     	int[] zq = minus(z1, minus(z2, z0));
     	
-    	// multiply 10 for p times
+    	// (Z1-Z2-Z0)*B^R
     	int[] zqn = multiplyTens(zq, r);
+    	
+    	// Z2 * B^(2*R)
     	int[] z2n = multiplyTens(z2, 2 * r);
     	
-    	// add all up
+    	// Z2 * B^(2*R) + (Z1-Z2-Z0)*B^R + Z0
     	int[] res = add(z2n, add(zqn, z0));
     	
     	//return 
     	return res;
     }
+
+	public static int[] add(int[] x, int[] y) {
+		
+		return null;
+	}
+
+	public static int[] minus(int[] x, int[] y) {
+		
+		return null;
+	}
 
 	public static int[] multiply(int[] x, int[] y, int b) {
     	// ensure the lower digit number below
@@ -176,7 +148,12 @@ class Template {
     }
     
     
-    private static int[] toIntArray(String s, int size) {
+    public static int[] multiplyTens(int[] x, int n) {
+		
+		return null;
+	}
+
+	private static int[] toIntArray(String s, int size) {
     	s = new StringBuilder(s).reverse().toString();
     	
     	int[] array = new int[size];
@@ -209,7 +186,36 @@ class Template {
     	return ans;
     }
     
-    private static int getDecimals(String s) {
+    private static String makeString(int[] a) {
+		StringBuilder s = new StringBuilder();
+		
+		for (int i = 0; i < a.length; i++) {
+			s.append(toDigit(a[i]));
+		}
+		
+		return s.toString();
+	}
+
+	private static String installDot(String s, int pos) {
+		String ans = "";
+		
+		if (pos == 0) {
+			StringBuilder sb = new StringBuilder(".");
+			sb.append(s);
+			ans = sb.toString();
+		} else {
+			StringBuilder sb = new StringBuilder(s.substring(0, pos));
+			sb.append(".");
+			sb.append(s.substring(pos, s.length()));
+			ans = sb.toString();
+		}
+		
+		ans = new StringBuilder(ans).reverse().toString();
+		
+		return ans;
+	}
+
+	private static int getDecimals(String s) {
     	int decimals = 0;
     	
     	if (s.contains(".")) {
