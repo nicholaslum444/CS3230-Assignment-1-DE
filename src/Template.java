@@ -14,7 +14,7 @@ import java.util.*;
 
 class Template { 
 	
-	static final int CUTOFF = 5005;
+	static final int CUTOFF = 1000;
 	
     public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in);
@@ -32,27 +32,16 @@ class Template {
 			m = sc.nextLine();
 			p = ""; // p is the momentum
 			
-			// Insert solution here.
-			int vDecimals = getDecimals(v);
-			int mDecimals = getDecimals(m);
-			int pDecimals = vDecimals + mDecimals;
+			// convert to array
+			int maxLen = Math.max(v.length(), m.length());
+			int[] vArr = toIntArray(v, maxLen);
+			int[] mArr = toIntArray(m, maxLen);
 			
-			// string concats are scary monsters.
-			
-			v = removeDot(v);
-			m = removeDot(m);
-			
-			int[] vArr = toIntArray(v, Math.max(v.length(), m.length()));
-			int[] mArr = toIntArray(m, Math.max(v.length(), m.length()));
-			
+			// karasuba
 			int[] pArr = carrotSoba(vArr, mArr);
 			
 			// make back into string
 			p = makeString(pArr);
-			// add decimal point
-			p = installDot(p, pDecimals);
-			// trim zeros
-			// remove trailing dot
 			p = trimZeros(p);
 			
 			pw.write(p);
@@ -64,28 +53,38 @@ class Template {
     
     public static int[] splitHigh(int[] x, int r) {
     	// [0, 1, 2, 3, 4] splitHigh 2 = [2, 3, 4]
+    	int resLen = x.length - r;
+    	int[] res = new int[resLen];
+    	for (int i = r, j = 0; i < x.length; i++, j++) {
+    		res[j] = x[i];
+    	}
     	
-    	return null;
+    	return res;
     }
     
     public static int[] splitLow(int[] x, int r) {
-    	// [0, 1, 2, 3, 4] splitlow 1 = [0, 1]
+    	// [0, 1, 2, 3, 4] splitlow 2 = [0, 1]
+    	int[] res = new int[r];
+    	for (int i = 0, j = 0; i < r; i++, j++) {
+    		res[j] = x[i];
+    	}
     	
-    	return null;
+    	return res;
     }
     
     public static int[] carrotSoba(int[] x, int[] y) {
     	int maxLen = Math.max(x.length, y.length);
     	if (maxLen <= CUTOFF) {
-    		return multiply(x, y, 10);
+    		int[] ans = multiply(x, y, 10);
+    		return ans;
     	}
     	
     	// split the two arrays at maxlen/2
     	int r = maxLen / 2;
     	int[] xHigh = splitHigh(x, r);
-    	int[] xLow = splitLow(x, r-1);
+    	int[] xLow = splitLow(x, r);
     	int[] yHigh = splitHigh(y, r);
-    	int[] yLow = splitLow(y, r-1);
+    	int[] yLow = splitLow(y, r);
     	
     	// 3 recursives
     	int[] z0 = carrotSoba(xLow, yLow);
@@ -95,7 +94,7 @@ class Template {
     	// Res = Z2 * B^(2*R) + (Z1-Z2-Z0)*B^R + Z0
     	
     	// (Z1-Z2-Z0)
-    	int[] zq = minus(z1, minus(z2, z0));
+    	int[] zq = minus(minus(z1, z2), z0);
     	
     	// (Z1-Z2-Z0)*B^R
     	int[] zqn = multiplyTens(zq, r);
@@ -111,13 +110,92 @@ class Template {
     }
 
 	public static int[] add(int[] x, int[] y) {
-		
-		return null;
+    	// ensure the lower digit number below
+    	if (x.length < y.length) {
+    		return add(y, x);
+    	}
+    	
+    	int[] res = new int[x.length+1];
+    	
+    	// i -> x, j -> y, y below
+    	//  001
+    	// +01
+    	//  011
+    	
+    	// add each cell, ignore carry
+    	for (int i = 0; i < x.length; i++) {
+    		if (i >= y.length) {
+    			res[i] = x[i];
+    		} else {
+    			res[i] = x[i] + y[i];
+    		}
+    	}
+    	
+    	// settle carry
+    	int car = 0;
+    	for (int i = 0; i < res.length; i++) {
+    		int sum = res[i] + car;
+    		int rem = sum % 10;
+    		res[i] = rem;
+    		car = sum / 10;
+    	}
+    	
+    	// trim if leading digit is 0 else there will be ooloop
+    	res = trimArrayLeadingZeros(res);
+    	
+		return res;
 	}
 
 	public static int[] minus(int[] x, int[] y) {
-		
-		return null;
+		// ensure the lower digit number below
+    	if (x.length < y.length) {
+    		return add(y, x);
+    	}
+    	
+    	int[] res = new int[x.length+1];
+    	
+    	// i -> x, j -> y, y below
+    	//  0  5  4
+    	// -6  5
+    	// -6  0  4
+    	// +A -1+A -1
+    	//  4  9  3
+    	
+    	// add each cell, ignore carry
+    	for (int i = 0; i < x.length; i++) {
+    		if (i >= y.length) {
+    			res[i] = x[i];
+    		} else {
+    			res[i] = x[i] - y[i];
+    		}
+    	}
+    	
+    	// settle carry
+    	int bor = 0;
+    	for (int i = 0; i < res.length; i++) {
+    		res[i] -= bor;
+    		if (res[i] < 0) {
+    			res[i] += 10;
+    			bor = 1;
+    		} else {
+    			bor = 0;
+    		}
+    	}
+    	
+    	// trim if leading digit is 0 else there will be ooloop
+    	res = trimArrayLeadingZeros(res);
+    	
+		return res;
+	}
+	
+	public static int[] multiplyTens(int[] x, int n) {
+		// 001 * 10^3 = 000,001
+		int resLen = x.length + n;
+		int[] res = new int[resLen];
+		for (int i = n; i < res.length; i++) {
+			res[i] = x[i-n];
+		}
+		return res;
 	}
 
 	public static int[] multiply(int[] x, int[] y, int b) {
@@ -144,13 +222,20 @@ class Template {
     		car = sum / b;
     	}
     	
+    	ans = trimArrayLeadingZeros(ans);
+    	
     	return ans;
     }
     
     
-    public static int[] multiplyTens(int[] x, int n) {
-		
-		return null;
+    public static int[] trimArrayLeadingZeros(int[] res) {
+    	//print(Arrays.toString(res));
+    	int last = res.length-1;
+		while (last > 1 && res[last] == 0) {
+			last--;
+		}
+		res = Arrays.copyOfRange(res, 0, last+1);
+		return res;
 	}
 
 	private static int[] toIntArray(String s, int size) {
@@ -174,18 +259,6 @@ class Template {
     	return array;
     }
     
-    private static String removeDot(String s) {
-    	String ans = s;
-    	if (s.contains(".")) {
-    		String[] sArr = s.split("\\.");
-    		StringBuilder ansB = new StringBuilder(sArr[0]);
-    		ansB.append(sArr[1]);
-    		ans = ansB.toString();
-    	}
-    	
-    	return ans;
-    }
-    
     private static String makeString(int[] a) {
 		StringBuilder s = new StringBuilder();
 		
@@ -193,39 +266,8 @@ class Template {
 			s.append(toDigit(a[i]));
 		}
 		
-		return s.toString();
+		return s.reverse().toString();
 	}
-
-	private static String installDot(String s, int pos) {
-		String ans = "";
-		
-		if (pos == 0) {
-			StringBuilder sb = new StringBuilder(".");
-			sb.append(s);
-			ans = sb.toString();
-		} else {
-			StringBuilder sb = new StringBuilder(s.substring(0, pos));
-			sb.append(".");
-			sb.append(s.substring(pos, s.length()));
-			ans = sb.toString();
-		}
-		
-		ans = new StringBuilder(ans).reverse().toString();
-		
-		return ans;
-	}
-
-	private static int getDecimals(String s) {
-    	int decimals = 0;
-    	
-    	if (s.contains(".")) {
-    		String[] sArr = s.split("\\.");
-    		decimals = sArr[1].length();
-    	}
-    	
-    	return decimals;
-    }
-	
 	
 	/**
 	 * Use to trim leading and trailing zeros on a result string.
@@ -253,8 +295,9 @@ class Template {
 			right--;
 		}
 		
-		if (left >= fp)
+		/*if (left >= fp) {
 			return "0" + input.substring(left,right+1);
+		}*/
 		return input.substring(left,right+1);
 	}
     
